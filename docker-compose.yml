@@ -1,0 +1,54 @@
+version: "3.2"
+
+services:
+  mongo:
+      image: mongo:4.0.10
+      container_name: cc-mongodb
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: root
+      volumes:
+        - ./mongo/data:/data/db
+      # command: /mongo-seed/mongodb-import.sh
+      networks:
+        default:
+          ipv4_address: ${MONGO_DB_HOST}
+      tty: true
+      stdin_open: true
+  mysql:
+    image: mysql:5.7
+    container_name: cc-db
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./database/data:/var/lib/mysql
+    networks:
+      default:
+        ipv4_address: ${DB_HOST}
+    tty: true
+    stdin_open: true
+
+  cc.local:
+    image: cc:latest
+    container_name: cc-172.28.0.201
+    volumes:
+       - ./:/var/www/web
+       - ./nginx/conf.d:/etc/nginx/conf.d
+       - ./nginx/cert:/etc/ssl/self-signed
+    networks:
+      default:
+        ipv4_address: 172.28.0.201
+    tty: true
+    stdin_open: true
+    depends_on:
+      - mysql
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    dns:
+      - 8.8.8.8
+networks:
+  default:
+      name: devnetwork
+      external: true
